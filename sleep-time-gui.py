@@ -3,43 +3,31 @@ import threading
 import time
 from datetime import datetime, timedelta
 import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMenu, QMenuBar
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout
+from ui import main
 
-
-class SleepTimer(QWidget):
+class MyQtApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
     def __init__(self):
-        super().__init__()
+        super(MyQtApp, self).__init__()
+        self.setupUi(self)
+        self.setWindowTitle("Sleep Timer")
 
         # Timer starten
         self.timer = None
 
-        # Set window title
-        self.setWindowTitle("Sleep Timer")
-
-        # GUI-Elemente erstellen
-        self.label = QLabel("Sleep Timer")
-        self.time_label = QLabel()
-        self.cancel_button = QPushButton("Abbrechen")
-        self.two_hours_button = QPushButton("2 Stunden")
-        self.one_hour_button = QPushButton("1 Stunde")
-        self.thirty_min_button = QPushButton("30 Minuten")
-
-        # Layout erstellen
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(self.label)
-        self.layout.addWidget(self.time_label)
-        self.layout.addWidget(self.cancel_button)
-        self.layout.addWidget(self.two_hours_button)
-        self.layout.addWidget(self.one_hour_button)
-        self.layout.addWidget(self.thirty_min_button)
-        self.setLayout(self.layout)
-
         # Signale und Slots verbinden
         self.cancel_button.clicked.connect(self.cancel_timer)
+        self.exit_button.clicked.connect(self.cancel_timer)
         self.two_hours_button.clicked.connect(lambda: self.start_timer(2 * 60 * 60))
         self.one_hour_button.clicked.connect(lambda: self.start_timer(1 * 60 * 60))
         self.thirty_min_button.clicked.connect(lambda: self.start_timer(30 * 60))
+
+        # Dark mode & StyleSheet
+        self.dark_mode = True
+        self.stylesheet()
+        self.action_Dark_Mode.triggered.connect(self.toggle_dark_mode)
 
     def start_timer(self, duration):
         # Wenn bereits ein Timer läuft, diesen zuerst abbrechen
@@ -55,11 +43,41 @@ class SleepTimer(QWidget):
         if self.timer:
             self.timer.cancel()
             self.timer = None
-            self.time_label.setText("Timer Abgebrochen")
+            self.time_label.setText("Timer Abgebrochen, neue Zeit wählen.")
 
     def set_time_label(self, time_str):
-        self.time_label.setText("Heruntergefahren in {} um {} Uhr".format(time_str, (datetime.now() + timedelta(seconds=self.timer.duration)).strftime("%H:%M:%S")))
+        self.time_label.setText("Heruntergefahren in: {} um {} Uhr.".format(time_str, (datetime.now() + timedelta(seconds=self.timer.duration)).strftime("%H:%M:%S")))
 
+    def stylesheet(self):
+        # StyleSheet
+        self.setStyleSheet("background-color: #222222; color: #ffffff;")
+        for button in self.findChildren(QPushButton):
+            button.setStyleSheet("QPushButton:hover { background-color: rgba(135, 167, 82, 100%); border: 1px solid #00FF00; }")
+        for qmenu in self.findChildren(QMenu):
+            qmenu.setStyleSheet("QMenu::item:selected { background-color: rgba(135, 167, 82, 100%); border: 1px solid #00FF00; color: #fff; }")
+        for qmenubar in self.findChildren(QMenuBar):
+            qmenubar.setStyleSheet("QMenuBar::item:selected { background-color: rgba(135, 167, 82, 100%); border: 1px solid #00FF00; color: #fff; }")
+
+    def set_dark_mode(self):
+        # Dark mode aktivieren
+        self.dark_mode = True
+        self.setStyleSheet("background-color: #222222; color: #ffffff;")
+
+    def set_light_mode(self):
+        # Light mode aktivieren
+        self.dark_mode = False
+        self.setStyleSheet("background-color: #ffffff; color: #000000;")
+
+    def toggle_dark_mode(self):
+        # Dark mode umschalten
+        if self.dark_mode:
+            self.set_light_mode()
+        else:
+            self.set_dark_mode()
+
+    def closeEvent(self, event):
+        self.cancel_timer()
+        event.accept()
 
 class CountdownTimer:
     def __init__(self, duration, ui):
@@ -90,10 +108,8 @@ class CountdownTimer:
     def cancel(self):
         self.cancelled = True
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication(sys.argv)
-    sleep_timer = SleepTimer()
-    sleep_timer.show()
-    sleep_timer.resize(310, 0)
+    qt_app = MyQtApp()
+    qt_app.show()
     sys.exit(app.exec_())
