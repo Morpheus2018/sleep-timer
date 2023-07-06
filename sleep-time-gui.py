@@ -3,6 +3,7 @@ import threading
 import time
 from datetime import datetime, timedelta
 import sys
+import json
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMenu, QMenuBar
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -17,17 +18,19 @@ class MyQtApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         # Timer starten
         self.timer = None
 
+        # Dark mode & StyleSheet
+        self.dark_mode = True
+        self.load_config()
+        self.stylesheet()
+        self.action_Dark_Mode.triggered.connect(self.set_dark_mode)
+        self.action_Light_Mode.triggered.connect(self.set_light_mode)
+
         # Signale und Slots verbinden
         self.cancel_button.clicked.connect(self.cancel_timer)
         self.exit_button.clicked.connect(self.cancel_timer)
         self.two_hours_button.clicked.connect(lambda: self.start_timer(2 * 60 * 60))
         self.one_hour_button.clicked.connect(lambda: self.start_timer(1 * 60 * 60))
         self.thirty_min_button.clicked.connect(lambda: self.start_timer(30 * 60))
-
-        # Dark mode & StyleSheet
-        self.dark_mode = True
-        self.stylesheet()
-        self.action_Dark_Mode.triggered.connect(self.toggle_dark_mode)
 
     def start_timer(self, duration):
         # Wenn bereits ein Timer läuft, diesen zuerst abbrechen
@@ -50,7 +53,6 @@ class MyQtApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
 
     def stylesheet(self):
         # StyleSheet
-        self.setStyleSheet("background-color: #222222; color: #ffffff;")
         for button in self.findChildren(QPushButton):
             button.setStyleSheet("QPushButton:hover { background-color: rgba(135, 167, 82, 100%); border: 1px solid #00FF00; }")
         for qmenu in self.findChildren(QMenu):
@@ -62,21 +64,34 @@ class MyQtApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         # Dark mode aktivieren
         self.dark_mode = True
         self.setStyleSheet("background-color: #222222; color: #ffffff;")
+        self.save_config()
 
     def set_light_mode(self):
         # Light mode aktivieren
         self.dark_mode = False
         self.setStyleSheet("background-color: #ffffff; color: #000000;")
+        self.save_config()
 
-    def toggle_dark_mode(self):
-        # Dark mode umschalten
-        if self.dark_mode:
-            self.set_light_mode()
-        else:
-            self.set_dark_mode()
+    def load_config(self):
+        try:
+            with open("config.json", "r") as f:
+                config = json.load(f)
+                self.dark_mode = config["dark_mode"]
+                if self.dark_mode:
+                    self.set_dark_mode()
+                else:
+                    self.set_light_mode()
+        except FileNotFoundError:
+            pass
+
+    def save_config(self):
+        config = {"dark_mode": self.dark_mode}
+        with open("config.json", "w") as f:
+            json.dump(config, f)
 
     def closeEvent(self, event):
         self.cancel_timer()
+        self.save_config()
         event.accept()
 
 class CountdownTimer:
