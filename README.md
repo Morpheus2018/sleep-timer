@@ -3,7 +3,7 @@ Sleep Timer for Linux, a simple python and GUI app to shut down a system after a
 #### Mind Style
 - Menü
   - Dark Mode
-
+  - Light Mode
 ## Screenshot
 ![sleep-timer.gif](https://github.com/Morpheus2018/sleep-timer/blob/master/screenshot/sleep-timer.gif)
 
